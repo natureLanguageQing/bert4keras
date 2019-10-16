@@ -2,18 +2,18 @@
 # 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
 
 import json
+import os
+
 import numpy as np
 import pandas as pd
-from random import choice
-import re, os
-import codecs
+
 from bert4keras.bert import load_pretrained_model, set_gelu
 from bert4keras.utils import SimpleTokenizer, load_vocab
-from bert4keras.train import PiecewiseLinearLearningRate
+
 set_gelu('tanh') # 切换gelu版本
 
 
-maxlen = 100
+max_len = 100
 config_path = '/root/kg/bert/albert_base_zh/bert_config.json'
 checkpoint_path = '/root/kg/bert/albert_base_zh/bert_model.ckpt'
 dict_path = '/root/kg/bert/albert_base_zh/vocab.txt'
@@ -96,7 +96,7 @@ class data_generator:
             X1, X2, Y = [], [], []
             for i in idxs:
                 d = self.data[i]
-                text = d[0][:maxlen]
+                text = d[0][:max_len]
                 x1, x2 = tokenizer.encode(first=text)
                 y = d[1]
                 X1.append(x1)
@@ -112,7 +112,6 @@ class data_generator:
 
 from keras.layers import *
 from keras.models import Model
-import keras.backend as K
 from keras.optimizers import Adam
 
 

@@ -10,6 +10,6 @@ setup(
     url='https://kexue.fm',
     author='bojone',
     author_email='bojone@spaces.ac.cn',
-    install_requires=['keras'],
+    install_requires=['keras', 'pandas', 'numpy'],
     packages=find_packages()
 )
