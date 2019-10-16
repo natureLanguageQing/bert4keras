@@ -6,8 +6,10 @@ import os
 
 import numpy as np
 import pandas as pd
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 from bert4keras.bert import load_pretrained_model, set_gelu
+from bert4keras.train import PiecewiseLinearLearningRate
 from bert4keras.utils import SimpleTokenizer, load_vocab
 
 set_gelu('tanh')  # 切换gelu版本
@@ -16,6 +18,13 @@ max_len = 100
 config_path = '../albert_tiny/albert_config_tiny.json'
 checkpoint_path = '../albert_tiny/albert_model.ckpt'
 dict_path = '../albert_tiny/vocab.txt'
+CONFIG = {
+    'max_len': 128,
+    'batch_size': 8,
+    'epochs': 32,
+    'use_multiprocessing': True,
+    'model_dir': os.path.join('../model_files/bert'),
+}
 
 train_message = pd.read_csv('../data/Train_Data.csv', header=None).values.tolist()
 chars = {}
@@ -116,6 +125,21 @@ model = load_pretrained_model(
 output = Lambda(lambda x: x[:, 0])(model.output)
 output = Dense(1, activation='sigmoid')(output)
 model = Model(model.input, output)
+save = ModelCheckpoint(
+    os.path.join(CONFIG['model_dir'], 'bert.h5'),
+    monitor='val_acc',
+    verbose=1,
+    save_best_only=True,
+    mode='auto'
+)
+early_stopping = EarlyStopping(
+    monitor='val_acc',
+    min_delta=0,
+    patience=8,
+    verbose=1,
+    mode='auto'
+)
+callbacks = [save, early_stopping]
 
 model.compile(
     loss='binary_crossentropy',
@@ -133,5 +157,40 @@ model.fit_generator(
     steps_per_epoch=len(train_D),
     epochs=10,
     validation_data=valid_D.__iter__(),
-    validation_steps=len(valid_D)
+    validation_steps=len(valid_D),
+    callbacks=callbacks
 )
+
+
+def predict(model, test_data):
+    """
+    预测
+    :param test_data:
+    :return:
+    """
+    X1 = []
+    X2 = []
+    for s in test_data:
+        x1, x2 = tokenizer.encode(first=s[:CONFIG['max_len']])
+        X1.append(x1)
+        X2.append(x2)
+    X1 = seq_padding(X1)
+    X2 = seq_padding(X2)
+    predict_results = model.predict([X1, X2])
+    return predict_results
+
+
+test_data = pd.read_csv(os.path.join('data/Test_Data.csv'), encoding='utf-8')
+predict_test = []
+for i in test_data['text']:
+    if i is not None:
+        predict_test.append(str(i))
+predict_results = predict(model, predict_test)
+with open(os.path.join('data/bert/food-predict.csv'), 'w') as f:
+    f.write("id,negative,key_entity\n")
+    for i in range(test_data.shape[0]):
+        label = 1 if predict_results[i][0] > 0.5 else 0
+        if label == 1:
+            f.write(test_data.id[i] + ',' + str(label) + ',' + test_data.entity[i] + '\n')
+        else:
+            f.write(test_data.id[i] + ',' + str(label) + '\n')
