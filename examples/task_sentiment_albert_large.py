@@ -1,25 +1,30 @@
 #! -*- coding:utf-8 -*-
 # 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
 
+
+# ! -*- coding:utf-8 -*-
+# 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
+
 import json
 import os
 
 import numpy as np
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.utils import multi_gpu_model
 
 from bert4keras.bert import load_pretrained_model, set_gelu
-from bert4keras.train import PiecewiseLinearLearningRate
 from bert4keras.utils import SimpleTokenizer, load_vocab
 
-set_gelu('tanh')  # 切换gelu版本
+set_gelu('tanh') # 切换gelu版本
 
-config_path = '../albert_tiny/albert_config_tiny.json'
-checkpoint_path = '../albert_tiny/albert_model.ckpt'
-dict_path = '../albert_tiny/vocab.txt'
+config_path = '../albert-large/albert_config_large.json'
+checkpoint_path = '../albert-large/albert_model.ckpt'
+dict_path = '../albert-large/vocab.txt'
+
 CONFIG = {
-    'max_len': 256,
-    'batch_size': 48,
+    'max_len': 384,
+    'batch_size': 24,
     'epochs': 32,
     'use_multiprocessing': True,
     'model_dir': os.path.join('../model_files/bert'),
@@ -129,6 +134,8 @@ model = load_pretrained_model(
 output = Lambda(lambda x: x[:, 0])(model.output)
 output = Dense(1, activation='sigmoid')(output)
 model = Model(model.input, output)
+model = multi_gpu_model(model, gpus=2)  # 设置使用2个gpu，该句放在模型compile之前
+
 save = ModelCheckpoint(
     os.path.join(CONFIG['model_dir'], 'bert.h5'),
     monitor='val_acc',

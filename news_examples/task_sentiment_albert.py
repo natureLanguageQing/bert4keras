@@ -1,22 +1,27 @@
 #! -*- coding:utf-8 -*-
 # 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
 
+
+# ! -*- coding:utf-8 -*-
+# 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
+
 import json
 import os
 
 import numpy as np
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.utils import multi_gpu_model
 
 from bert4keras.bert import load_pretrained_model, set_gelu
-from bert4keras.train import PiecewiseLinearLearningRate
 from bert4keras.utils import SimpleTokenizer, load_vocab
 
-set_gelu('tanh')  # 切换gelu版本
+set_gelu('tanh') # 切换gelu版本
 
-config_path = '../albert_tiny/albert_config_tiny.json'
-checkpoint_path = '../albert_tiny/albert_model.ckpt'
-dict_path = '../albert_tiny/vocab.txt'
+config_path = '../albert/bert_config.json'
+checkpoint_path = '../albert/bert_model.ckpt'
+dict_path = '../albert/vocab.txt'
+
 CONFIG = {
     'max_len': 256,
     'batch_size': 48,
@@ -26,7 +31,7 @@ CONFIG = {
 }
 max_len = CONFIG['max_len']
 batch_size = CONFIG['batch_size']
-train_message = pd.read_csv('../data/Train_Data.csv', header=None).values.tolist()
+train_message = pd.read_csv('../news/test_csv_message.csv', header=None).values.tolist()
 chars = {}
 
 data = []
@@ -34,9 +39,9 @@ data = []
 
 
 for feather_data in train_message:
-    if feather_data[2] is not None and feather_data[3] is not None:
-        data.append((str(feather_data[2]) + str(feather_data[3]), feather_data[4]))
-        for c in str(feather_data[2]) + str(feather_data[3]):
+    if feather_data[1] is not None and feather_data[2] is not None:
+        data.append((str(feather_data[1]) + str(feather_data[2]), feather_data[3]))
+        for c in str(feather_data[1]) + str(feather_data[2]):
             if c is not None:
                 if c in chars.keys():
                     chars[c] = chars[c] + 1
@@ -127,8 +132,10 @@ model = load_pretrained_model(
 )
 
 output = Lambda(lambda x: x[:, 0])(model.output)
-output = Dense(1, activation='sigmoid')(output)
+output = Dense(3, activation='softmax')(output)
 model = Model(model.input, output)
+model = multi_gpu_model(model, gpus=2)  # 设置使用2个gpu，该句放在模型compile之前
+
 save = ModelCheckpoint(
     os.path.join(CONFIG['model_dir'], 'bert.h5'),
     monitor='val_acc',
@@ -146,7 +153,7 @@ early_stopping = EarlyStopping(
 callbacks = [save, early_stopping]
 
 model.compile(
-    loss='binary_crossentropy',
+    loss='sparse_categorical_crossentropy',
     optimizer=Adam(1e-5),  # 用足够小的学习率
     # optimizer=PiecewiseLinearLearningRate(Adam(1e-5), {1000: 1e-5, 2000: 6e-5}),
     metrics=['accuracy']
@@ -193,8 +200,4 @@ predict_results = predict(model, predict_test)
 with open(os.path.join('../data/bert/food-predict.csv'), 'w') as f:
     f.write("id,negative,key_entity\n")
     for i in range(test_data.shape[0]):
-        label = 1 if predict_results[i][0] > 0.5 else 0
-        if label == 1:
-            f.write(str(test_data.id[i]) + ',' + str(label) + ',' + str(test_data.entity[i]) + '\n')
-        else:
-            f.write(str(test_data.id[i]) + ',' + str(label) + '\n')
+            f.write(str(test_data.id[i]) + ',' + str(predict_results[i][0]) + '\n')
