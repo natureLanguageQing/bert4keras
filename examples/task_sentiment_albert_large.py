@@ -23,7 +23,7 @@ checkpoint_path = '../albert-large/albert_model.ckpt'
 dict_path = '../albert-large/vocab.txt'
 
 CONFIG = {
-    'max_len': 384,
+    'max_len': 256,
     'batch_size': 24,
     'epochs': 32,
     'use_multiprocessing': True,

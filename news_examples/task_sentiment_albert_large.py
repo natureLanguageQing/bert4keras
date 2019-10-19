@@ -1,7 +1,3 @@
-#! -*- coding:utf-8 -*-
-# 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
-
-
 # ! -*- coding:utf-8 -*-
 # 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
 
@@ -19,13 +15,13 @@ from bert4keras.utils import SimpleTokenizer, load_vocab
 
 set_gelu('tanh')  # 切换gelu版本
 
-config_path = '../albert/bert_config.json'
-checkpoint_path = '../albert/bert_model.ckpt'
-dict_path = '../albert/vocab.txt'
+config_path = '../albert-large/albert_config_large.json'
+checkpoint_path = '../albert-large/albert_model.ckpt'
+dict_path = '../albert-large/vocab.txt'
 
 CONFIG = {
     'max_len': 256,
-    'batch_size': 48,
+    'batch_size': 12,
     'epochs': 32,
     'use_multiprocessing': True,
     'model_dir': os.path.join('../model_files/bert'),
@@ -201,4 +197,5 @@ predict_results = predict(model, predict_test)
 with open(os.path.join('../data/bert/news-predict.csv'), 'w') as f:
     f.write("id,negative,key_entity\n")
     for i in range(test_data.shape[0]):
-        f.write(str(test_data.id[i]) + ',' + str(predict_results[i][0]) + '\n')
+
+        f.write(str(test_data.id[i]) + ',' + str(predict_results.argmax(axis=1)[0]) + '\n')

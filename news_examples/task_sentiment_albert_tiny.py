@@ -1,7 +1,3 @@
-#! -*- coding:utf-8 -*-
-# 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
-
-
 # ! -*- coding:utf-8 -*-
 # 情感分析类似，加载albert_zh权重(https://github.com/brightmart/albert_zh)
 
@@ -19,13 +15,13 @@ from bert4keras.utils import SimpleTokenizer, load_vocab
 
 set_gelu('tanh')  # 切换gelu版本
 
-config_path = '../albert/bert_config.json'
-checkpoint_path = '../albert/bert_model.ckpt'
-dict_path = '../albert/vocab.txt'
+config_path = '../albert_tiny_250k/albert_config_tiny.json'
+checkpoint_path = '../albert_tiny_250k/albert_model.ckpt'
+dict_path = '../albert_tiny_250k/vocab.txt'
 
 CONFIG = {
     'max_len': 256,
-    'batch_size': 48,
+    'batch_size': 12,
     'epochs': 32,
     'use_multiprocessing': True,
     'model_dir': os.path.join('../model_files/bert'),
@@ -155,8 +151,8 @@ callbacks = [save, early_stopping]
 
 model.compile(
     loss='sparse_categorical_crossentropy',
-    # optimizer=Adam(1e-5),  # 用足够小的学习率
-    optimizer=PiecewiseLinearLearningRate(Adam(1e-5), {1000: 1e-5, 2000: 6e-5}),
+    optimizer=Adam(1e-5),  # 用足够小的学习率
+    # optimizer=PiecewiseLinearLearningRate(Adam(1e-5), {1000: 1e-5, 2000: 6e-5}),
     metrics=['accuracy']
 )
 model.summary()
@@ -167,7 +163,7 @@ valid_D = data_generator(valid_data)
 model.fit_generator(
     train_D.__iter__(),
     steps_per_epoch=len(train_D),
-    epochs=100000,
+    epochs=1,
     validation_data=valid_D.__iter__(),
     validation_steps=len(valid_D),
     callbacks=callbacks
@@ -189,16 +185,17 @@ def predict(model, test_data):
     X1 = seq_padding(X1)
     X2 = seq_padding(X2)
     predict_results = model.predict([X1, X2])
+
     return predict_results
 
 
-test_data = pd.read_csv(os.path.join('../data/Test_Data.csv'), encoding='utf-8')
+test_data = pd.read_csv(os.path.join('../news/Test_DataSet.csv'), encoding='utf-8')
 predict_test = []
-for i in test_data['text']:
+for i, j in zip(test_data['title'], test_data['content']):
     if i is not None:
-        predict_test.append(str(i))
+        predict_test.append(str(i)+str(j))
 predict_results = predict(model, predict_test)
 with open(os.path.join('../data/bert/news-predict.csv'), 'w') as f:
-    f.write("id,negative,key_entity\n")
-    for i in range(test_data.shape[0]):
-        f.write(str(test_data.id[i]) + ',' + str(predict_results[i][0]) + '\n')
+    f.write("id,label\n")
+    for i in range(test_data['title']):
+        f.write(str(test_data.id[i]) + ',' + str(predict_results[i].argmax(axis=1)[0]) + '\n')
