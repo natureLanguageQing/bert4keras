@@ -20,7 +20,7 @@ checkpoint_path = '../albert_tiny_250k/albert_model.ckpt'
 dict_path = '../albert_tiny_250k/vocab.txt'
 
 CONFIG = {
-    'max_len': 256,
+    'max_len': 64,
     'batch_size': 12,
     'epochs': 32,
     'use_multiprocessing': True,
@@ -131,7 +131,7 @@ model = load_pretrained_model(
 output = Lambda(lambda x: x[:, 0])(model.output)
 output = Dense(3, activation='softmax')(output)
 model = Model(model.input, output)
-model = multi_gpu_model(model, gpus=2)  # 设置使用2个gpu，该句放在模型compile之前
+# model = multi_gpu_model(model, gpus=2)  # 设置使用2个gpu，该句放在模型compile之前
 
 save = ModelCheckpoint(
     os.path.join(CONFIG['model_dir'], 'bert.h5'),
@@ -197,6 +197,10 @@ for i, j in zip(test_data['title'], test_data['content']):
 predict_results = predict(model, predict_test)
 with open(os.path.join('../data/bert/news-predict.csv'), 'w') as f:
     f.write("id,label\n")
-    for i in range(test_data.shape[0]):
-        c = [x[i] for x in predict_results]
-        f.write(str(test_data.id[i]) + ',' + str(np.argmax(c, axis=1)) + '\n')
+    for i, j in zip(test_data.shape[0], predict_results.tolist()):
+        max_index = 0
+        max = 0
+        for index,answer in enumerate(j):
+            if answer > max:
+                max_index = index
+        f.write(str(i) + ',' + str(max_index) + '\n')
