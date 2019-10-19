@@ -193,9 +193,10 @@ test_data = pd.read_csv(os.path.join('../news/Test_DataSet.csv'), encoding='utf-
 predict_test = []
 for i, j in zip(test_data['title'], test_data['content']):
     if i is not None:
-        predict_test.append(str(i)+str(j))
+        predict_test.append(str(i) + str(j))
 predict_results = predict(model, predict_test)
 with open(os.path.join('../data/bert/news-predict.csv'), 'w') as f:
     f.write("id,label\n")
-    for i in range(test_data['title']):
-        f.write(str(test_data.id[i]) + ',' + str(predict_results[i].argmax(axis=1)[0]) + '\n')
+    for i in range(test_data.shape[0]):
+        c = [x[i] for x in predict_results]
+        f.write(str(test_data.id[i]) + ',' + str(np.argmax(c, axis=1)) + '\n')
