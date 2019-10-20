@@ -192,13 +192,20 @@ def predict(model, test_data):
     return predict_results
 
 
-test_data = pd.read_csv(os.path.join('../data/Test_Data.csv'), encoding='utf-8')
+test_data = pd.read_csv(os.path.join('../news/Test_DataSet.csv'), encoding='utf-8')
 predict_test = []
-for i in test_data['text']:
+for i, j in zip(test_data['title'], test_data['content']):
     if i is not None:
-        predict_test.append(str(i))
+        predict_test.append(str(i) + str(j))
 predict_results = predict(model, predict_test)
-with open(os.path.join('../data/bert/news-predict.csv'), 'w') as f:
-    f.write("id,negative,key_entity\n")
-    for i in range(test_data.shape[0]):
-        f.write(str(test_data.id[i]) + ',' + str(predict_results[i][0]) + '\n')
+with open(os.path.join('../data/bert/news-predict-base.csv'), 'w') as f:
+    f.write("id,label\n")
+    for i, j in zip(test_data['id'], predict_results.tolist()):
+        print(j)
+        max_index = 0
+        max_value = 0
+        for index, answer in enumerate(j):
+            if answer > max_value:
+                max_value = answer
+                max_index = index
+        f.write(str(i) + ',' + str(max_index) + '\n')

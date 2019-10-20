@@ -195,7 +195,7 @@ for i, j in zip(test_data['title'], test_data['content']):
     if i is not None:
         predict_test.append(str(i) + str(j))
 predict_results = predict(model, predict_test)
-with open(os.path.join('../data/bert/news-predict.csv'), 'w') as f:
+with open(os.path.join('../data/bert/news-predict-tiny.csv'), 'w') as f:
     f.write("id,label\n")
     for i, j in zip(test_data['id'], predict_results.tolist()):
         print(j)
