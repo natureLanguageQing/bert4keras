@@ -20,7 +20,7 @@ checkpoint_path = '../albert_tiny_250k/albert_model.ckpt'
 dict_path = '../albert_tiny_250k/vocab.txt'
 
 CONFIG = {
-    'max_len': 64,
+    'max_len': 384,
     'batch_size': 12,
     'epochs': 32,
     'use_multiprocessing': True,
@@ -135,13 +135,13 @@ model = Model(model.input, output)
 
 save = ModelCheckpoint(
     os.path.join(CONFIG['model_dir'], 'bert.h5'),
-    monitor='val_acc',
+    monitor='val_accuracy',
     verbose=1,
     save_best_only=True,
     mode='auto'
 )
 early_stopping = EarlyStopping(
-    monitor='val_acc',
+    monitor='val_accuracy',
     min_delta=0,
     patience=8,
     verbose=1,
@@ -197,10 +197,12 @@ for i, j in zip(test_data['title'], test_data['content']):
 predict_results = predict(model, predict_test)
 with open(os.path.join('../data/bert/news-predict.csv'), 'w') as f:
     f.write("id,label\n")
-    for i, j in zip(test_data.shape[0], predict_results.tolist()):
+    for i, j in zip(test_data['id'], predict_results.tolist()):
+        print(j)
         max_index = 0
-        max = 0
-        for index,answer in enumerate(j):
-            if answer > max:
+        max_value = 0
+        for index, answer in enumerate(j):
+            if answer > max_value:
+                max_value = answer
                 max_index = index
         f.write(str(i) + ',' + str(max_index) + '\n')
