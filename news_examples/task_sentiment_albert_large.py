@@ -151,8 +151,8 @@ callbacks = [save, early_stopping]
 
 model.compile(
     loss='sparse_categorical_crossentropy',
-    # optimizer=Adam(1e-5),  # 用足够小的学习率
-    optimizer=PiecewiseLinearLearningRate(Adam(1e-5), {1000: 1e-5, 2000: 6e-5}),
+    optimizer=Adam(1e-5),  # 用足够小的学习率
+    # optimizer=PiecewiseLinearLearningRate(Adam(1e-5), {1000: 1e-5, 2000: 6e-5}),
     metrics=['accuracy']
 )
 model.summary()

@@ -1,10 +1,14 @@
+# 代码用途
+仅仅是为了在比赛中利用albelt模型跑一些比赛成绩。源代码由苏剑林老师提供。我闫广庆只是一个小小的搬运工。
+
+
 # bert4keras
 - Our light reimplement of bert for keras
 - 更清晰、更轻量级的keras版bert
 - 个人博客：https://kexue.fm/
 
 ## 说明
-这是笔者重新实现的keras版的bert，致力于用尽可能清爽的代码来实现keras下调用bert。
+这是苏剑林老师重新实现的keras版的bert，致力于用尽可能清爽的代码来实现keras下调用bert。
 
 目前已经基本实现bert，并且能成功加载官方权重，经验证模型输出跟keras-bert一致，大家可以放心使用。
 
