@@ -6,6 +6,8 @@ import os
 
 import numpy as np
 import pandas as pd
+from keras_radam import RAdam
+
 from bert4keras.train import PiecewiseLinearLearningRate
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.utils import multi_gpu_model
@@ -131,7 +133,7 @@ model = load_pretrained_model(
 output = Lambda(lambda x: x[:, 0])(model.output)
 output = Dense(3, activation='softmax')(output)
 model = Model(model.input, output)
-model = multi_gpu_model(model, gpus=2)  # 设置使用2个gpu，该句放在模型compile之前
+# model = multi_gpu_model(model, gpus=2)  # 设置使用2个gpu，该句放在模型compile之前
 
 save = ModelCheckpoint(
     os.path.join(CONFIG['model_dir'], 'bert.h5'),
@@ -151,7 +153,8 @@ callbacks = [save, early_stopping]
 
 model.compile(
     loss='sparse_categorical_crossentropy',
-    optimizer=Adam(1e-5),  # 用足够小的学习率
+    # optimizer=Adam(1e-5),  # 用足够小的学习率
+    optimizer=RAdam(1e-5),  # 用足够小的学习率
     # optimizer=PiecewiseLinearLearningRate(Adam(1e-5), {1000: 1e-5, 2000: 6e-5}),
     metrics=['accuracy']
 )
@@ -197,7 +200,6 @@ predict_results = predict(model, predict_test)
 with open(os.path.join('../data/bert/news-predict-large.csv'), 'w') as f:
     f.write("id,label\n")
     for i, j in zip(test_data['id'], predict_results.tolist()):
-        print(j)
         max_index = 0
         max_value = 0
         for index, answer in enumerate(j):
